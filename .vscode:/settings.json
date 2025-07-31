@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": ["./modules"],
+    "python.defaultInterpreterPath": "./.venv/bin/python"  // 가상환경 사용 시
+  }
+  

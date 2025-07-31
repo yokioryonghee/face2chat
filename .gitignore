@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.pyc
+.vscode/
+.venv*/
+env/
+venv/
+*.zip
+*.pt
+vosk-model-small-en-us-0.15/
+yolov8n.pt
+

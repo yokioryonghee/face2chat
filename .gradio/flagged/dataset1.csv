@@ -1,0 +1,7 @@
+image,audio,감정,음성 인식 결과,GPT 응답,응답 음성,timestamp
+,,,,,,2025-06-04 13:48:39.636184
+,,,,,,2025-06-04 16:07:48.203359
+,,,,,,2025-06-04 16:07:49.939164
+,.gradio/flagged/audio/2709850982e86ae18b68/audio.wav,neutral,"안녕하세요, 반갑습니다.","당신은 이렇게 말했어요: '안녕하세요, 반갑습니다.'",.gradio/flagged/응답 음성/cd0b7bdbd36c7ca46a70/audio.wav,2025-06-04 16:17:41.703813
+,.gradio/flagged/audio/9fefb709ed6444d7fd0d/audio.wav,neutral,"안녕하세요, 반갑습니다.","당신은 이렇게 말했어요: '안녕하세요, 반갑습니다.'",.gradio/flagged/응답 음성/f1e9c847801321673cf3/audio.wav,2025-06-04 16:22:25.710974
+.gradio/flagged/image/343c20e5a1112e6e897a/wait.png,,,,,,2025-06-09 16:38:10.860679
