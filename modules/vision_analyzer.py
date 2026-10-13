@@ -36,7 +36,7 @@ class VisionAnalyzer:
                 return "이미지 분석 실패: 파일 없음"
         elif isinstance(image, np.ndarray): # Gradio Image(type="numpy")
             # Gradio에서 넘겨주는 이미지는 이미 numpy 배열이므로 직접 사용
-            img_to_process = image
+            img_to_process = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         elif image is None: # 웹캠 연결이 안 되어 이미지가 None으로 들어오는 경우
             print("[시각 분석기] 이미지 입력이 없습니다 (초기 로드 또는 웹캠 비활성화).")
             return "이미지 분석 실패: 입력 없음"
