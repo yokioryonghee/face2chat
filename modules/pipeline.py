@@ -1,12 +1,9 @@
+from __future__ import annotations
 # modules/pipeline.py
 import numpy as np # np 임포트 추가 (STT 길이 체크에 필요)
 
 # ⭐️ 추가: VisionAnalyzer 및 다른 모듈들을 명시적으로 임포트 (타입 힌트 및 린터 경고 해결용) ⭐️
-from .emotion_detector import EmotionDetector
-from .speech_to_text import SpeechToText
-from .chatbot_engine import ChatbotEngine
-from .text_to_speech import TextToSpeech
-from .vision_analyzer import VisionAnalyzer # ⭐️ VisionAnalyzer 명시적 임포트 ⭐️
+
 
 
 class Face2ChatPipeline:
@@ -55,7 +52,7 @@ class Face2ChatPipeline:
         full_text_for_chatbot = f"{scene_info}. 사용자가 말했어요: '{text}'" if scene_info else text
         
         # ⭐️ chatbot_engine.py의 메서드 이름을 'generate_response'로 수정 ⭐️
-        response = self.bot.generate_response(full_text_for_chatbot, emotion) 
+        response = self.bot.generate_response(full_text_for_chatbot if getattr(self.bot,"model",None) else text, emotion) 
         
         # 5. 텍스트를 음성으로 변환
         audio_out = self.tts.synthesize(response)

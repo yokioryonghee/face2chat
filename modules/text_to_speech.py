@@ -15,7 +15,7 @@ class TextToSpeech:
             duration_sec = 0.5
             silence = np.zeros(int(sample_rate * duration_sec), dtype=np.float32)
             print("No text for TTS. Returning silence.")
-            return silence, sample_rate
+            return sample_rate, silence
 
         temp_audio_file = None
 
@@ -37,16 +37,10 @@ class TextToSpeech:
                 audio_data = audio_data.mean(axis=1)
 
             print(f"Synthesized audio with sample rate: {sample_rate}, shape: {audio_data.shape}")
-            return audio_data, sample_rate
+            return sample_rate, audio_data
 
-        except Exception as e:
-            print(f"Error in TextToSpeech synthesis: {e}")
-            sample_rate = 44100
-            duration_sec = 1.0
-            silence = np.zeros(int(sample_rate * duration_sec), dtype=np.float32)
-            print("TTS failed. Returning silence.")
-            return silence, sample_rate
-
+        except Exception as exc:
+            raise RuntimeError('Speech synthesis failed; check internet/MP3 support') from exc
         finally:
             if temp_audio_file and os.path.exists(temp_audio_file):
                 os.remove(temp_audio_file) # 임시 MP3 파일 정리

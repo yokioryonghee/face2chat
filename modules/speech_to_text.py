@@ -3,7 +3,7 @@
 import wave
 import json
 import os
-from vosk import Model, KaldiRecognizer
+
 import soundfile as sf
 import numpy as np
 import tempfile
@@ -14,6 +14,7 @@ class SpeechToText:
         print("[Vosk STT] 초기화 중...")
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Vosk 모델을 찾을 수 없습니다: {model_path}")
+        from vosk import Model
         self.model = Model(model_path)
         print("[Vosk STT] 초기화 완료.")
 
@@ -23,6 +24,7 @@ class SpeechToText:
             print("[STT 오류] 오디오 파일 경로가 유효하지 않습니다.")
             return "" # 빈 문자열 반환
 
+        from vosk import KaldiRecognizer
         temp_wav_file = None
         wf = None # wave 파일 객체 초기화
         try:
@@ -49,26 +51,15 @@ class SpeechToText:
             # 16비트 정수형으로 변환
             # float32 (-1.0 to 1.0) -> int16 (-32768 to 32767) 스케일링
             # audio_data는 이미 float32이므로 단순히 스케일링 후 astype(np.int16)
-            audio_data_int16 = (audio_data * 32767).astype(np.int16)
+            audio_data_int16 = (np.clip(audio_data,-1,1) * 32767).astype(np.int16)
 
-            # 변환된 오디오를 임시 WAV 파일로 저장
-            # delete=False를 사용하여 파일을 바로 삭제하지 않음
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as fp_wav:
-                # soundfile로 16비트 모노 WAV 저장
-                sf.write(fp_wav.name, audio_data_int16, samplerate, subtype='PCM_16')
-                temp_wav_file = fp_wav.name
-            
-            # wave 모듈로 변환된 임시 WAV 파일 열기
-            wf = wave.open(temp_wav_file, "rb")
-
-        except Exception as e:
-            print(f"[STT 오류] 오디오 변환 또는 wave 파일 열기 실패: {e}")
-            return "" # 빈 문자열 반환
-        finally:
-            # 임시 파일 정리. 파일을 모두 사용한 후 삭제.
-            if temp_wav_file and os.path.exists(temp_wav_file):
-                os.remove(temp_wav_file)
-
+            import io
+            buffer=io.BytesIO()
+            sf.write(buffer,audio_data_int16,samplerate,format='WAV',subtype='PCM_16')
+            buffer.seek(0)
+            wf=wave.open(buffer,'rb')
+        except Exception as exc:
+            raise RuntimeError('Audio conversion failed') from exc
 
         # Vosk 모델이 요구하는 최종 WAV 형식 확인 (선택 사항, 이미 변환했으므로 통과되어야 함)
         if wf.getnchannels() != 1 or wf.getsampwidth() != 2 or wf.getcomptype() != "NONE":
