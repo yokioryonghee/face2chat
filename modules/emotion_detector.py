@@ -13,7 +13,7 @@
 
 # 클래스 정의 개인 프로젝트 바이너 구조
 
-from deepface import DeepFace
+
 import cv2
 import numpy as np
 
@@ -42,9 +42,12 @@ class EmotionDetector:
             return "알 수 없음"
 
         try:
+            from deepface import DeepFace
+            if isinstance(image, np.ndarray):
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
             # enforce_detection=False: 얼굴을 찾지 못해도 오류를 발생시키지 않음
             # 대신 빈 리스트를 반환할 수 있음
-            result = DeepFace.analyze(img, actions=['emotion'], enforce_detection=False, silent=True) # silent=True 추가로 콘솔 출력 줄임
+            result = DeepFace.analyze(img, actions=['emotion'], enforce_detection=True, silent=True) # silent=True 추가로 콘솔 출력 줄임
             
             if result and len(result) > 0:
                 emotion = result[0]['dominant_emotion']

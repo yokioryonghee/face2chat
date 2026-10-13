@@ -1,75 +1,49 @@
-# modules/chatbot_engine.py
+"""Offline rules by default; optional explicitly configured local Ollama."""
+import ast
+import json
+import math
+import operator
+import os
+import re
+from urllib.request import Request,urlopen
+
+OPS={ast.Add:operator.add,ast.Sub:operator.sub,ast.Mult:operator.mul,ast.Div:operator.truediv}
+def arithmetic(text):
+    text=text.replace('더하기','+').replace('빼기','-').replace('곱하기','*').replace('나누기','/')
+    match=re.fullmatch(r'\s*([0-9. +*/()\-]+)(?:는|은)?[?？]?\s*',text)
+    if not match or len(match[1])>80: return None
+    def value(node):
+        if isinstance(node,ast.Constant) and type(node.value) in (int,float): return node.value
+        if isinstance(node,ast.BinOp) and type(node.op) in OPS: return OPS[type(node.op)](value(node.left),value(node.right))
+        if isinstance(node,ast.UnaryOp) and isinstance(node.op,ast.USub): return -value(node.operand)
+        raise ValueError('Unsupported expression')
+    try:
+        answer=value(ast.parse(match[1],mode='eval').body)
+        return f'{answer:g}' if math.isfinite(answer) else None
+    except (SyntaxError,ValueError,ZeroDivisionError,OverflowError): return None
+
 class ChatbotEngine:
-    def __init__(self):
-        # 향후 GPT API 키나 세션 초기화가 필요한 경우 여기에 작성
-        pass
-
-    def generate_response(self, text: str, emotion: str) -> str:
-        # 빈 입력 처리
-        if not text.strip():
-            return "음성을 잘 못 들었어요. 다시 말씀해 주세요."
-
-        # ⭐️ pipeline.py에서 text는 이미 scene_info와 사용자의 발화가 합쳐진 상태일 수 있음 ⭐️
-        # 예: "주변에서 다음을 감지했습니다: person, laptop. 사용자가 말했어요: '안녕하세요?'"
-        # 이 합쳐진 텍스트를 파싱하여 활용하거나, LLM에 직접 전달하여 문맥을 이해하게 합니다.
-
-        response_prefix = {
-            "happy": "기분이 좋아 보여요! ",
-            "sad": "기운 내세요. ",
-            "angry": "마음을 진정시켜볼까요? ",
-            "surprise": "놀라셨군요! ",
-            "fear": "걱정하지 마세요. ",
-            "disgust": "불쾌하셨군요... ",
-            "neutral": "",
-            "unknown": ""
-        }
-
-        prefix = response_prefix.get(emotion, "")
-        
-        # ⭐️ LLM (GPT) 연동 코드 예시 (실제 API 호출 코드로 교체 필요) ⭐️
-        # 현재는 단순한 문자열 조합이지만, 여기에 OpenAI, Google Gemini 등의 API 호출 로직이 들어갑니다.
-        # 이 때, 감정 정보와 주변 상황 정보(text에 포함됨)를 프롬프트에 잘 넣어주면 더 똑똑한 챗봇이 됩니다.
-        
-        # 예시: OpenAI API를 사용하는 경우 (주석 처리됨)
-        # from openai import OpenAI
-        # client = OpenAI(api_key="YOUR_OPENAI_API_KEY") # 실제 API 키로 교체
-
-        # try:
-        #     system_prompt = "당신은 사용자의 감정과 주변 상황을 고려하여 친절하고 공감적인 대화를 나누는 챗봇입니다. 짧고 간결하게 대화하세요."
-        #     # text에 scene_info와 사용자 발화가 합쳐져 있으므로 이를 분리하여 프롬프트에 활용
-        #     if "주변에서 다음을 감지했습니다:" in text:
-        #         scene_info_for_llm = text.split("주변에서 다음을 감지했습니다:")[1].split('.')[0].strip()
-        #         user_text_for_llm = text.split('.', 1)[1].replace("사용자가 말했어요:", "").strip() if len(text.split('.', 1)) > 1 else ""
-        #     else:
-        #         scene_info_for_llm = "알 수 없음"
-        #         user_text_for_llm = text
-            
-        #     user_message = f"사용자의 감정: {emotion}. 주변 상황: {scene_info_for_llm}. 사용자가 말한 내용: {user_text_for_llm}."
-        #     messages = [
-        #         {"role": "system", "content": system_prompt},
-        #         {"role": "user", "content": user_message}
-        #     ]
-        #     completion = client.chat.completions.create(
-        #         model="gpt-3.5-turbo", # 또는 다른 모델
-        #         messages=messages
-        #     )
-        #     llm_response = completion.choices[0].message.content
-        #     response = f"{prefix}{llm_response}"
-        # except Exception as e:
-        #     print(f"(챗봇 엔진 오류) LLM 응답 생성 실패: {e}")
-        #     response = f"{prefix}당신은 이렇게 말했어요: '{text}'" # LLM 실패 시 대체 응답
-        
-        # 현재는 LLM 연동 없이 단순 문자열 조합
-        response = f"{prefix}당신은 이렇게 말했어요: '{text}'"
-
-        return response
-    
-    # 이 respond 메서드는 pipeline.py에서 generate_response로 호출되므로
-    # 사용되지 않거나 다른 목적으로 사용될 수 있습니다.
-    # 현재 구조에서는 generate_response가 주된 응답 생성 로직입니다.
-    def respond(self, text, emotion=None):
-        if emotion:
-            print(f"(챗봇) 감정 고려하여 응답 생성 중... 감정: {emotion}")
-            return f"({emotion} 상태에서) 당신은 이렇게 말했어요: '{text}'"
-        else:
-         return f"당신은 이렇게 말했어요: '{text}'"
+    def __init__(self,model=None,transport=None):
+        self.model=model or os.environ.get('FACE2CHAT_OLLAMA_MODEL')
+        self.transport=transport or urlopen
+    def generate_response(self,text,emotion='unknown',history=None):
+        text=(text or '').strip()
+        if not text: return '메시지를 입력하거나 녹음해 주세요.'
+        if self.model:
+            messages=[{'role':'system','content':'한국어로 간결하게 답하세요. 표정 분류는 불확실하며 감정이나 심리 상태를 단정하지 마세요.'}]
+            messages.extend((history or [])[-12:])
+            messages.append({'role':'user','content':text})
+            request=Request('http://127.0.0.1:11434/api/chat',data=json.dumps({'model':self.model,'messages':messages,'stream':False}).encode(),headers={'Content-Type':'application/json'},method='POST')
+            try:
+                with self.transport(request,timeout=60) as response: result=json.load(response)
+                answer=result['message']['content'].strip()
+                if not answer: raise ValueError('Empty model response')
+                return answer
+            except Exception as exc:
+                raise RuntimeError('Local Ollama request failed. Start Ollama and prepare the configured model, or use offline mode.') from exc
+        answer=arithmetic(text)
+        if answer is not None: return f'계산 결과는 {answer}입니다.'
+        if any(word in text.lower() for word in ['안녕','hello','hi ']): return '안녕하세요. 무엇을 도와드릴까요?'
+        if any(word in text for word in ['고마워','감사']): return '도움이 됐다니 다행이에요.'
+        return '현재는 오프라인 규칙 응답 모드입니다. 간단한 계산과 인사를 처리할 수 있습니다. 자유로운 대화는 로컬 Ollama 모델을 설정해 주세요.'
+    def respond(self,text,emotion=None): return self.generate_response(text,emotion or 'unknown')
