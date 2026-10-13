@@ -8,6 +8,7 @@ ROOT=Path(__file__).resolve().parent
 def respond(text,image=None,audio=None,use_vision=False,use_speech=False,use_tts=False,history=None):
     emotion,scene='unknown',''
     if use_speech:
+        if not audio: raise ValueError('Record or upload audio before enabling speech recognition')
         from modules.speech_to_text import SpeechToText
         model_path=os.environ.get('FACE2CHAT_VOSK_MODEL',str(ROOT/'models/vosk-model-small-en-us-0.15'))
         text=SpeechToText(model_path).transcribe(audio)
